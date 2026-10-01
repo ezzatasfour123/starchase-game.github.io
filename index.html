@@ -161,7 +161,7 @@ async function sync(read){const u=await getU();if(!u)return null;await cfg();con
 if(s!==sig){try{await setDoc(doc(db,"players",u.uid),{name:ST.name,pid:ST.id,points:tot(),lv:ST.l,stars:ST.s,coins:coins,pt:Math.floor(ST.pt||0),code:mkCode(),updated:serverTimestamp()},{merge:true});
 if(!w.pre&&wp>0)await setDoc(doc(db,"weeks",String(w.n),"players",u.uid),{name:ST.name,pid:ST.id,points:wp,updated:serverTimestamp()},{merge:true});
 if(ST.li)await setDoc(doc(db,"saves",u.uid),{data:mkCode(),updated:serverTimestamp()});
-sig=s;cache=null}catch(e){console.warn("sync",e.code||e)}}
+sig=s;cache=null}catch(e){console.warn("sync",e.code||e);try{toast("⚠️ فشل الحفظ: "+(e.code||e.message))}catch(x){}}}
 if(!read)return null;if(cache&&Date.now()-ct<6e4&&cache.wn===w.n)return cache;
 let top=[],rank=null;if(!w.pre){const col=collection(db,"weeks",String(w.n),"players"),q=await getDocs(query(col,orderBy("points","desc"),limit(10)));top=q.docs.map(d=>({id:d.data().pid||"",name:d.data().name,points:d.data().points}));
 if(wp>0){const c=await getCountFromServer(query(col,where("points",">",wp)));rank=c.data().count+1}}
