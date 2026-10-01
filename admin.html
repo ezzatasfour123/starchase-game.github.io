@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>لوحة تحكم مطاردة النجوم</title>
+<style>
+:root{--bg:#10162e;--ink:#eef1ff;--gold:#ffd04a;--card:#1a2247;--mute:#9aa6d6;--red:#ff5d73;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;padding:14px;max-width:780px;margin-inline:auto}
+h1{color:var(--gold);font-size:1.4rem;margin:0 0 10px}h2{font-size:1.1rem;margin:0 0 10px}
+.c{background:var(--card);border-radius:14px;padding:14px;margin-bottom:14px}
+input,select{font:inherit;width:100%;padding:10px;border-radius:10px;border:2px solid #2a3470;background:var(--bg);color:var(--ink);margin-bottom:8px}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 16px;background:var(--gold);color:#241a00;margin-inline-end:6px}
+button.r{background:var(--red);color:#fff}button.g{background:#2a3470;color:var(--ink)}
+.pz{display:grid;grid-template-columns:34px 1fr;gap:6px;align-items:center}
+.tb{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:8px 6px;text-align:start;border-bottom:1px solid #2a3470;white-space:nowrap}th{color:var(--mute)}
+.bd{background:var(--red);color:#fff;border-radius:6px;padding:1px 6px;font-size:.7rem}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.st div{background:var(--bg);border-radius:10px;padding:10px;text-align:center}.st b{display:block;color:var(--gold);font-size:1.3rem}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-start;justify-content:center;padding:14px;overflow:auto;z-index:9}.mo[hidden]{display:none}.mo .c{width:100%;max-width:520px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #2a3470;word-break:break-all}.kv b{color:var(--gold);text-align:end}
+textarea{width:100%;height:110px;font-size:.7rem;direction:ltr;background:var(--bg);color:var(--ink);border:2px solid #2a3470;border-radius:10px;padding:8px;margin:6px 0}
+</style></head><body>
+<h1>⚙️ لوحة التحكم · مطاردة النجوم</h1>
+<div id="login" class="c"><h2>🔐 دخول الأدمن</h2><p style="color:var(--mute)">ادخل بنفس إيميل جوجل اللي كتبته في قواعد الحماية.</p><button id="go">الدخول بجوجل</button></div>
+<div id="app" hidden>
+<div class="c"><h2>📊 نظرة عامة</h2><div class="st"><div><b id="sw">-</b>الأسبوع</div><div><b id="sp">-</b>كل اللاعبين</div><div><b id="sn">-</b>لاعبين الأسبوع</div></div></div>
+<div class="c"><h2>🎁 الإعدادات والجوايز</h2>
+<label>أول يوم في الأسبوع الأول (أي يوم وأي ساعة تختارها)</label><input id="st" type="datetime-local">
+<div id="pz"></div><input id="msg" placeholder="رسالة تظهر للاعبين في صفحة التصنيف">
+<button id="svc">حفظ</button><span id="ms"></span></div>
+<div class="c"><div class="tabs"><button class="g" id="t1">تصنيف الأسبوع</button><button class="g" id="t2">كل اللاعبين</button></div>
+<div id="wsel"><label>رقم الأسبوع</label><select id="wk"></select></div>
+<input id="q" placeholder="ابحث بالاسم أو الأيدي">
+<div class="tb"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></div>
+</div>
+<div id="md" class="mo" hidden><div class="c"><div id="dt"></div><label>كود النسخة الاحتياطية</label><textarea id="dc" readonly></textarea><button id="cpy">📋 نسخ الكود</button><button class="g" id="cl">إغلاق</button></div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,deleteDoc,collection,query,orderBy,limit,getDocs,getCountFromServer,Timestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyDFH--UfdLJIwzyhptiwiVmu6EF_WBPv9Q",authDomain:"star-chase-dfa6e.firebaseapp.com",projectId:"star-chase-dfa6e",storageBucket:"star-chase-dfa6e.firebasestorage.app",messagingSenderId:"648055389980",appId:"1:648055389980:web:f83640259274f856a004d9"}),auth=getAuth(app),db=getFirestore(app);
+const $=i=>document.getElementById(i),esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const toLocal=s=>{const d=new Date(s);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,16)},fmtT=s=>{s=+s||0;return Math.floor(s/3600)+" س "+Math.floor(s%3600/60)+" د"};
+let cfg={start:"2026-10-05T00:00:00.000Z",prizes:[],msg:""},cur=1,tab=2,rows=[],wmap={};
+function weekNow(){const t=Date.parse(cfg.start);return Date.now()<t?1:Math.floor((Date.now()-t)/6048e5)+1}
+$("go").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>alert("لم يتم تسجيل الدخول\n"+(e.code||e.message)));
+onAuthStateChanged(auth,async u=>{if(!u||u.isAnonymous)return;try{await getDocs(query(collection(db,"players"),limit(1)));const s=await getDoc(doc(db,"config","main"));if(s.exists()){const d=s.data();cfg={start:d.start.toDate().toISOString(),prizes:d.prizes||[],msg:d.msg||""}}
+$("login").hidden=true;$("app").hidden=false;init()}catch(e){signOut(auth).catch(()=>{});alert("مفيش صلاحية. اتأكد إن إيميلك مكتوب في قواعد الحماية ("+u.email+")")}});
+function init(){cur=weekNow();$("sw").textContent=cur;$("st").value=toLocal(cfg.start);$("msg").value=cfg.msg;let h="";for(let i=0;i<10;i++)h+=`<div class='pz'><span>${i+1}</span><input data-i='${i}' value='${esc(cfg.prizes[i]||"")}' placeholder='جايزة المركز ${i+1}'></div>`;$("pz").innerHTML=h;
+let o="";for(let n=cur;n>=1;n--)o+=`<option value='${n}'>الأسبوع ${n}</option>`;$("wk").innerHTML=o;
+getCountFromServer(collection(db,"players")).then(c=>$("sp").textContent=c.data().count).catch(()=>{});load()}
+$("svc").onclick=async()=>{if(!$("st").value){alert("اختار تاريخ ووقت البداية");return}const p=[...document.querySelectorAll("#pz input")].map(i=>i.value.trim());try{await setDoc(doc(db,"config","main"),{start:Timestamp.fromDate(new Date($("st").value)),prizes:p,msg:$("msg").value.trim()});cfg={start:new Date($("st").value).toISOString(),prizes:p,msg:$("msg").value.trim()};$("ms").textContent="✅ اتحفظ"; init()}catch(e){alert("فشل الحفظ")}};
+async function load(){$("wsel").hidden=false;try{const w=$("wk").value||cur;
+if(tab===1){const q=await getDocs(query(collection(db,"weeks",String(w),"players"),orderBy("points","desc"),limit(500)));rows=q.docs.map(d=>({uid:d.id,...d.data()}));$("sn").textContent=rows.length;getCountFromServer(collection(db,"weeks",String(w),"players")).then(c=>$("sn").textContent=c.data().count).catch(()=>{});$("th").innerHTML="<tr><th>#</th><th>الاسم</th><th>نقاط الأسبوع</th><th>الجايزة</th><th>الأيدي</th><th></th></tr>"}
+else{const [q,wq]=await Promise.all([getDocs(query(collection(db,"players"),orderBy("points","desc"),limit(500))),getDocs(query(collection(db,"weeks",String(w),"players"),limit(500)))]);wmap={};wq.docs.forEach(d=>wmap[d.id]=d.data().points);$("sn").textContent=wq.size;rows=q.docs.map(d=>({uid:d.id,...d.data()}));$("th").innerHTML="<tr><th>#</th><th>الاسم</th><th>الأيدي</th><th>نقاط الأسبوع</th><th>النقاط الكلية</th><th>المرحلة</th><th>وقت اللعب</th><th>تفاصيل</th><th></th></tr>"}}catch(e){alert("مقدرش يقرا البيانات")}list()}
+function list(){const q=$("q").value.trim().toLowerCase();let h="";rows.forEach((u,i)=>{if(q&&!(String(u.name).toLowerCase().includes(q)||String(u.pid||"").includes(q)||u.uid.includes(q)))return;const b=u.banned?" <span class='bd'>محظور</span>":"",bt=`<button class='${u.banned?"g":"r"}' data-b='${esc(u.uid)}' data-v='${u.banned?0:1}'>${u.banned?"فك الحظر":"حظر"}</button>`;
+h+=tab===1?`<tr><td>${i+1}</td><td>${esc(u.name)}</td><td>${esc(u.points)}</td><td>${i<10?esc(cfg.prizes[i]||"-"):""}</td><td>${esc(u.pid||u.uid.slice(0,8))}</td><td>${bt}</td></tr>`:`<tr><td>${i+1}</td><td>${esc(u.name)}${b}</td><td>${esc(u.pid)}</td><td>${esc(wmap[u.uid]??0)}</td><td>${esc(u.points)}</td><td>${esc(Math.min(120,(+u.lv||0)+1))}</td><td>${u.pt?fmtT(u.pt):"-"}</td><td><button class='g' data-d='${i}'>🔎</button></td><td>${bt}</td></tr>`});$("tb").innerHTML=h}
+function showD(u){const wp=wmap[u.uid]??0,lv=+u.lv||0,kv=(k,v)=>`<div class='kv'><span>${k}</span><b>${esc(v)}</b></div>`;
+$("dt").innerHTML="<h2>👤 "+esc(u.name)+(u.banned?" <span class='bd'>محظور</span>":"")+"</h2>"+kv("الأيدي",u.pid||"-")+kv("UID",u.uid)+kv("النقاط الكلية",u.points)+kv("نقاط الأسبوع",wp)+kv("المرحلة الحالية",Math.min(120,lv+1))+kv("مراحل خلصها",lv)+kv("النجوم",u.stars??0)+kv("العملات",u.coins??0)+kv("وقت اللعب",u.pt?fmtT(u.pt):"-")+kv("آخر تحديث",u.updated&&u.updated.toDate?u.updated.toDate().toLocaleString("ar-EG"):"-");
+$("dc").value=u.code||"";$("dc").placeholder="الكود هيظهر بعد ما اللاعب يلعب بالنسخة الجديدة";$("cpy").textContent="📋 نسخ الكود";$("md").hidden=false}
+$("tb").addEventListener("click",e=>{const b=e.target.closest("button[data-d]");if(b)showD(rows[+b.dataset.d])});
+$("cl").onclick=()=>$("md").hidden=true;$("md").onclick=e=>{if(e.target===$("md"))$("md").hidden=true};
+$("cpy").onclick=()=>{const t=$("dc");t.select();const ok=()=>$("cpy").textContent="✅ اتنسخ";if(navigator.clipboard)navigator.clipboard.writeText(t.value).then(ok,()=>{document.execCommand("copy");ok()});else{document.execCommand("copy");ok()}};
+$("tb").onclick=async e=>{const id=e.target.dataset.b;if(!id)return;const ban=e.target.dataset.v==="1";if(!confirm((ban?"حظر":"فك حظر")+" اللاعب ده؟"))return;try{await updateDoc(doc(db,"players",id),{banned:ban});if(ban)await Promise.all(Array.from({length:cur},(_,i)=>deleteDoc(doc(db,"weeks",String(i+1),"players",id)).catch(()=>{})));load()}catch(x){alert("فشل التنفيذ")}};
+$("q").oninput=list;$("wk").onchange=load;$("t1").onclick=()=>{tab=1;load()};$("t2").onclick=()=>{tab=2;load()};
+</script></body></html>
