@@ -148,7 +148,6 @@ function starPass(){
         h+="<button class='b' id='clm_all' style='background:linear-gradient(180deg,#7dffb0,#15b358); color:#000; max-width:380px; margin-bottom:5px; box-shadow:0 5px 0 #0d7a3b'>🎁 استلام كل المتاح مرة واحدة</button>";
     }
     
-    // تصميم التمرير الأفقي
     h+="<div id='ps_scroll' style='display:flex; gap:12px; overflow-x:auto; padding:10px 5px 20px 5px; width:100%; max-width:95vw; scroll-snap-type: x mandatory; direction:rtl; scrollbar-width:thin'>";
     passCfg.forEach(function(t, i) {
         var canClaim = tp >= t.p, clm = claimed[i] || 0;
@@ -168,7 +167,25 @@ function starPass(){
     h+="</div><button class='b s' id='bb' style='margin-top:10px; max-width:380px'>رجوع</button>";
     ov(h); $("bb").onclick = menu;
     
-    if($("upg")) $("upg").onclick = function() { vcashShop(); };
+    if($("upg")) $("upg").onclick = function() {
+        var m = "<h2>تفعيل الباس الذهبي</h2><p>تقدر تفعل الباس الذهبي بـ 5000 عملة لفتح كل الجوايز الإضافية.</p>";
+        m += "<button class='b' id='buy_pass' style='background:linear-gradient(180deg,#ffd04a,#d98c00); color:#241a00; width:100%; max-width:340px; margin-bottom:15px;'>🪙 شراء بـ 5000 عملة</button>";
+        m += "<button class='b s' onclick='starPass()' style='width:100%; max-width:340px'>رجوع</button>";
+        ov(m);
+        
+        $("buy_pass").onclick = function() {
+            if(coins >= 5000) {
+                coins -= 5000;
+                ST.pass.p = true;
+                sv();
+                snd(880,.2,"triangle");
+                toast("✅ تم تفعيل الباس الذهبي بنجاح!");
+                starPass();
+            } else {
+                toast("❌ معندكش عملات كفاية (محتاج 5000)");
+            }
+        };
+    };
     
     if($("clm_all")) $("clm_all").onclick = function() {
         var container = $("ps_scroll");
@@ -284,7 +301,7 @@ function isB(){return!!(BAN&&BAN.b&&(!BAN.u||BAN.u>now()))}
 function fmtR(ms){var s=Math.max(0,Math.ceil(ms/1e3)),d=s/86400|0,h=s%86400/3600|0,m=s%3600/60|0;return(d?d+" يوم ":"")+(d||h?h+" ساعة ":"")+m+" دقيقة "+s%60+" ثانية"}
 function chkBan(){var e=document.getElementById("bnx"),b=isB(),m=!b&&CONF.mt;if(!b&&!m){if(e)e.remove();clearInterval(bnT);return}
 if(!e){e=document.createElement("div");e.id="bnx";e.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(8,10,25,.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:1.15rem;line-height:1.9;direction:rtl";document.body.appendChild(e);if(mode==="play")pause()}
-e.innerHTML=b?"<div style='font-size:3rem'>🚫</div><h2>تم حظر حسابك</h2>"+(BAN.m?"<p>السبب: "+esc(BAN.m)+"</p>":"")+"<p>"+(BAN.u?"ينتهي الحظر بعد:<br><b>"+fmtR(BAN.u-now())+"</b>":"الحظر دائم")+"</p>":"<div style='font-size:3rem'>🛠️</div><h2>اللعبة تحت الصيانة</h2><p>"+esc(CONF.mt)+"</p>";clearInterval(bnT);bnT=setInterval(chkBan,1e3)}
+e.innerHTML=b?"<div style='font-size:3rem'>🚫</div><h2>تم حظر حسابك</h2>"+(BAN.m?"<p>السبب: "+esc(BAN.m)+"</p>":"")+"<p>"+(BAN.u?"ينتهي الحظر بعد:<br><b>"+fmtR(BAN.u-now())+"</b>":"الحظر دائم")+"</p>":"<div style='font-size:3rem'>🛠️️</div><h2>اللعبة تحت الصيانة</h2><p>"+esc(CONF.mt)+"</p>";clearInterval(bnT);bnT=setInterval(chkBan,1e3)}
 function mailbox(){var h="<h2>📬 البريد</h2><button class='b s' id='bc' style='margin-bottom:15px; width:100%; max-width:340px; background:linear-gradient(180deg,#25D366,#128C7E)'>💬 ادخل كود هدية</button>";(CONF.news||[]).forEach(function(n){h+="<div class='lv' style='text-align:right;padding:12px;width:100%;max-width:340px'><b>"+esc(n.t||"")+"</b><br><small>"+esc(n.b||"")+"</small></div>"});
 (ST.ml||[]).forEach(function(n){h+="<div class='lv' style='text-align:right;padding:12px;width:100%;max-width:340px'>🎁 <b>"+esc(n.t||"هدية")+"</b><br><small>"+(n.c?n.c+" عملة ":"")+(n.p?n.p+" نقطة ":"")+(n.s?n.s+" نجمة":"")+"</small></div>"});h+="<h3>🆘 الدعم والبلاغات</h3><div id='tk' style='width:100%;max-width:340px'></div><select id='tp'><option>دعم</option><option>اقتراح</option><option>بلاغ</option></select><textarea id='tm' maxlength=500 placeholder='اكتب مشكلتك أو اقتراحك'></textarea><button class='b' id='ts' style='max-width:340px'>إرسال</button><button class='b s' id='bb' style='margin-top:10px; width:100%; max-width:340px'>رجوع</button>";ov(h);$("bb").onclick=menu;
 $("bc").onclick=function(){var p=prompt("ادخل كود الهدية:"); if(p)toast("❌ الكود غير صحيح أو مستخدم مسبقاً")};
@@ -394,7 +411,7 @@ let sig="",cache=null,ct=0,cft=0;
 const ready=new Promise(res=>{onAuthStateChanged(auth,u=>{if(u){if(!u.isAnonymous&&!ST.li){ST.li=1;ST.em=u.email||"";sv()}res(u)}else signInAnonymously(auth).catch(()=>res(null))})});
 window.sendTicket=async function(m){const u=await getU();if(!u)throw 0;await setDoc(doc(db,"tickets",u.uid),{m:m.slice(0,500),n:ST.name,p:ST.id,u:serverTimestamp()},{merge:true})};
 window.myTicket=async function(){const u=await getU();if(!u)return null;const d=await getDoc(doc(db,"tickets",u.uid));return d.exists()?d.data():null};
-function applyGift(d){var n=+d.n||0;if(n<=(ST.gn||0))return;ST.gn=n;var c=Math.max(0,Math.min(1e7,d.c|0)),p=Math.max(0,Math.min(1e4,d.p|0)),s=Math.max(0,Math.min(1e5,d.s|0));coins+=c;ST.s+=s;if(p){ST.bp=(ST.bp||0)+p;wchk();ST.wk.bp=(ST.wk.bp||0)+p}(ST.ml=ST.ml||[]).unshift({t:d.t||"هدية من الإدارة",c:c,p:p,s:s});ST.ml=ST.ml.slice(0,10);sv();sig="";cache=null;toast("🎁 هدية من الإدارة"+(c?" · "+c+" عملة":"")+(p?" · "+p+" نقطة":"")+(s?" · "+s+" نجمة":"")+(d.t?" — "+d.t:""));setTimeout(function(){sync(true).then(function(d){if(d)NR=d})},3e3)}
+function applyGift(d){var n=+d.n||0;if(n<=(ST.gn||0))return;ST.gn=n;var c=Math.max(0,Math.min(1e7,d.c|0)),p=Math.max(0,Math.min(1e4,d.p|0)),s=Math.max(0,Math.min(1e5,d.s|0));coins+=c;ST.s+=s;if(p){ST.bp=(ST.bp||0)+p;wchk();ST.wk.bp=(ST.wk.bp||0)+p}if(d.pass){ST.pass=ST.pass||{c:[]};ST.pass.p=true}(ST.ml=ST.ml||[]).unshift({t:d.t||"هدية من الإدارة",c:c,p:p,s:s});ST.ml=ST.ml.slice(0,10);sv();sig="";cache=null;toast("🎁 هدية من الإدارة"+(c?" · "+c+" عملة":"")+(p?" · "+p+" نقطة":"")+(s?" · "+s+" نجمة":"")+(d.pass?" · ومبروك الباس الذهبي":"")+(d.t?" — "+d.t:""));setTimeout(function(){sync(true).then(function(d){if(d)NR=d})},3e3)}
 async function getU(){await ready;if(auth.currentUser)return auth.currentUser;try{return(await signInAnonymously(auth)).user}catch(e){return null}}
 async function cfg(){if(Date.now()-cft<3e5)return;try{const s=await getDoc(doc(db,"config","main"));if(s.exists()){const d=s.data();if(d.start&&d.start.toDate)CONF.start=d.start.toDate().toISOString();CONF.prizes=d.prizes||[];CONF.msg=d.msg||"";CONF.sp=d.sp||{};CONF.news=d.news||[];CONF.mt=d.mt||"";CONF.dg=d.dg!=null?+d.dg:25;CONF.cm=d.cm!=null?+d.cm:1;CONF.pass=d.pass||[];cft=Date.now()}}catch(e){}}
 async function sync(read){const u=await getU();if(!u)return null;await cfg();let wasB=isB();try{const ps0=await getDoc(doc(db,"players",u.uid));BAN=ps0.exists()?{b:ps0.data().banned===true,u:+ps0.data().bu||0,m:ps0.data().bm||""}:null}catch(e){}const bnd=isB();if(wasB&&!bnd)sig="";const w=WK(),wp=wtot(),s=[ST.name,tot(),wp,ST.l,ST.s,ST.li,w.n,coins,own.length,cs,(ST.pt||0)/60|0].join("|");
