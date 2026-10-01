@@ -4,16 +4,18 @@ service cloud.firestore {
     function admin(){ return request.auth != null && request.auth.token.email == "ezzatt1234tt@gmail.com" && request.auth.token.email_verified == true; }
     function me(uid){ return request.auth != null && request.auth.uid == uid; }
     match /config/main { allow read: if true; allow write: if admin(); }
+    function notBanned(uid){ return !exists(/databases/$(db)/documents/players/$(uid)) || !(get(/databases/$(db)/documents/players/$(uid)).data.get("banned", false) == true && (get(/databases/$(db)/documents/players/$(uid)).data.get("bu", 0) == 0 || get(/databases/$(db)/documents/players/$(uid)).data.get("bu", 0) > request.time.toMillis())); }
     match /players/{uid} {
       allow read: if admin() || me(uid);
       allow list: if admin();
-      allow create, update: if me(uid) && !(("banned" in request.resource.data) || ("bu" in request.resource.data) || ("bm" in request.resource.data));
+      allow create: if me(uid) && !(("banned" in request.resource.data) || ("bu" in request.resource.data) || ("bm" in request.resource.data));
+      allow update: if me(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(["banned","bu","bm"]);
       allow update, delete: if admin();
     }
     match /weeks/{w}/players/{uid} {
       allow read: if true;
-      allow create, update: if me(uid) && request.resource.data.points is int && request.resource.data.points < 200000;
-      allow delete: if admin();
+      allow create, update: if me(uid) && notBanned(uid) && request.resource.data.points is int && request.resource.data.points < 200000;
+      allow write: if admin();
     }
     match /saves/{uid} { allow read, write: if me(uid); }
     match /inbox/{uid} { allow read: if me(uid) || admin(); allow write: if admin(); }
